@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp Supplier Verification — Mahamandir Blocks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --wa-green: #25D366;
+    --wa-dark: #128C7E;
+    --wa-teal: #075E54;
+    --wa-bubble-out: #DCF8C6;
+    --wa-bubble-in: #ffffff;
+    --wa-bg: #ECE5DD;
+    --slide-bg: #0f1117;
+    --slide-surface: #1a1d27;
+    --slide-border: rgba(255,255,255,0.08);
+    --text-primary: #f0f0f0;
+    --text-muted: #7a8099;
+    --accent: #25D366;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--slide-bg);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-primary);
+    overflow: hidden;
+  }
+
+  .slide {
+    width: 100vw; height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 300px 1fr;
+    grid-template-rows: auto 1fr auto;
+    gap: 0;
+    align-items: center;
+    padding: 32px 40px;
+    position: relative;
+  }
+
+  /* Subtle background grid */
+  .slide::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(37,211,102,0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(37,211,102,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* Header row */
+  .slide-header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--slide-border);
+    margin-bottom: 8px;
+  }
+  .slide-title {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .wa-logo {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--wa-green);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .wa-logo svg { width: 20px; height: 20px; fill: #fff; }
+  .slide-title h1 {
+    font-size: 18px; font-weight: 600; color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+  .slide-title p { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .slide-tag {
+    font-size: 11px; padding: 4px 12px;
+    border: 1px solid rgba(37,211,102,0.3);
+    border-radius: 20px; color: var(--accent);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* Left panel — workflow steps */
+  .left-panel {
+    grid-column: 1;
+    padding-right: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-self: end;
+    width: 100%;
+    max-width: 320px;
+  }
+  .panel-label {
+    font-size: 10px; letter-spacing: 0.1em; color: var(--text-muted);
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+  .step-card {
+    background: var(--slide-surface);
+    border: 1px solid var(--slide-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex; align-items: flex-start; gap: 12px;
+    transition: all 0.3s;
+    cursor: default;
+  }
+  .step-card.active {
+    border-color: rgba(37,211,102,0.5);
+    background: rgba(37,211,102,0.06);
+  }
+  .step-card.done {
+    border-color: var(--slide-border);
+    opacity: 0.6;
+  }
+  .step-num {
+    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--slide-border);
+    color: var(--text-muted);
+    transition: all 0.3s;
+  }
+  .step-card.active .step-num { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .step-card.done .step-num { background: var(--wa-dark); color: #fff; border-color: var(--wa-dark); font-size: 13px; }
+  .step-card.done .step-num::after { content: '✓'; }
+  .step-card.done .step-num span { display: none; }
+  .step-info { flex: 1; }
+  .step-info h3 { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+  .step-info p { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+  .step-card.active .step-info h3 { color: var(--accent); }
+
+  /* Center — Phone */
+  .phone-col {
+    grid-column: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .phone-wrap {
+    position: relative;
+  }
+  .phone-glow {
+    position: absolute;
+    inset: -20px;
+    border-radius: 50px;
+    background: radial-gradient(ellipse at center, rgba(37,211,102,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .phone {
+    width: 260px;
+    border-radius: 36px;
+    border: 7px solid #1c1c2e;
+    background: #1c1c2e;
+    box-shadow: 0 0 0 1.5px #000, 0 20px 60px rgba(0,0,0,0.6), 0 0 80px rgba(37,211,102,0.08);
+    overflow: hidden;
+    position: relative;
+  }
+  .phone-notch {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 70px; height: 16px;
+    background: #1c1c2e;
+    border-radius: 0 0 10px 10px;
+    z-index: 10;
+  }
+  .phone-statusbar {
+    background: var(--wa-teal);
+    padding: 18px 12px 2px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .status-left { font-size: 9px; color: rgba(255,255,255,0.8); font-weight: 500; }
+  .status-right { display: flex; gap: 4px; align-items: center; }
+  .status-right span { font-size: 9px; color: rgba(255,255,255,0.8); }
+  .wa-header {
+    background: var(--wa-teal);
+    padding: 4px 10px 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .wa-back { color: rgba(255,255,255,0.9); font-size: 16px; }
+  .wa-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--wa-green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: #fff; flex-shrink: 0;
+  }
+  .wa-contact { flex: 1; }
+  .wa-contact-name { font-size: 13px; font-weight: 500; color: #fff; }
+  .wa-contact-status { font-size: 10px; color: rgba(255,255,255,0.7); }
+  .wa-icons { display: flex; gap: 12px; color: rgba(255,255,255,0.9); font-size: 16px; }
+  .wa-body {
+    background: var(--wa-bg);
+    padding: 6px 8px;
+    min-height: 320px;
+    max-height: 320px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 3px;
+    scroll-behavior: smooth;
+  }
+  .wa-body::-webkit-scrollbar { width: 3px; }
+  .wa-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 3px; }
+  .date-chip {
+    align-self: center;
+    background: rgba(255,255,255,0.85);
+    font-size: 10px; color: #555;
+    padding: 2px 8px; border-radius: 8px; margin: 4px 0;
+  }
+  .brow { display: flex; }
+  .brow.out { justify-content: flex-end; }
+  .bubble {
+    max-width: 195px;
+    padding: 6px 8px 3px;
+    font-size: 11px; line-height: 1.45; color: #111;
+    position: relative;
+  }
+  .bubble.out { background: var(--wa-bubble-out); border-radius: 8px 0 8px 8px; }
+  .bubble.in  { background: var(--wa-bubble-in);  border-radius: 0 8px 8px 8px; }
+  .btime { display: block; text-align: right; font-size: 9px; color: #888; margin-top: 2px; }
+  .wa-inputbar {
+    background: #f0f0f0;
+    padding: 6px 8px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .wa-pill {
+    flex: 1; background: #fff; border-radius: 18px;
+    padding: 5px 10px; font-size: 10px; color: #999;
+    border: none; font-family: inherit;
+  }
+  .wa-sendbtn {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--wa-dark);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; border: none;
+  }
+
+  /* Right panel — controls */
+  .right-panel {
+    grid-column: 3;
+    padding-left: 32px;
+    display: flex; flex-direction: column; gap: 10px;
+    max-width: 320px;
+  }
+  .ctrl-btn {
+    background: var(--slide-surface);
+    border: 1px solid var(--slide-border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 12px; color: var(--text-primary);
+    cursor: pointer;
+    text-align: left;
+    display: flex; align-items: center; gap: 10px;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+    width: 100%;
+    line-height: 1.4;
+  }
+  .ctrl-btn:hover:not(:disabled) {
+    border-color: rgba(37,211,102,0.4);
+    background: rgba(37,211,102,0.06);
+    transform: translateX(2px);
+  }
+  .ctrl-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .ctrl-btn .ci {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+    background: rgba(37,211,102,0.1);
+    color: var(--accent);
+  }
+  .ctrl-btn.waiting .ci { background: rgba(240,165,0,0.1); color: #f0a500; }
+  .ctrl-btn .clabel { flex: 1; }
+  .ctrl-btn .clabel small { display: block; font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+  .ctrl-btn.done-btn { border-color: rgba(18,140,126,0.4); }
+  .ctrl-btn.done-btn .ci { background: rgba(18,140,126,0.15); color: var(--wa-dark); }
+
+  .reset-btn {
+    margin-top: 4px;
+    background: transparent;
+    border: 1px solid var(--slide-border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 11px; color: var(--text-muted);
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s; width: 100%;
+  }
+  .reset-btn:hover { border-color: rgba(255,80,80,0.3); color: #ff8080; }
+
+  /* Footer */
+  .slide-footer {
+    grid-column: 1 / -1;
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid var(--slide-border);
+    margin-top: 8px;
+  }
+  .footer-note { font-size: 11px; color: var(--text-muted); }
+  .footer-brand { font-size: 11px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+  .progress-bar {
+    height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.08);
+    width: 120px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+</style>
+</head>
+<body>
+
+<div class="slide">
+
+  <!-- HEADER -->
+  <div class="slide-header">
+    <div class="slide-title">
+      <div class="wa-logo">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      </div>
+      <div>
+        <h1>Supplier Verification — WhatsApp Workflow</h1>
+        <p>Mahamandir area • Concrete / AAC / Fly-ash blocks • ~4000 units</p>
+      </div>
+    </div>
+    <div class="slide-tag">INTERACTIVE DEMO</div>
+  </div>
+
+  <!-- LEFT — STEPS -->
+  <div class="left-panel">
+    <div class="panel-label">Workflow Steps</div>
+
+    <div class="step-card active" id="s1">
+      <div class="step-num"><span>1</span></div>
+      <div class="step-info">
+        <h3>पहला संदेश</h3>
+        <p>Block की जरूरत और quantity बताएं</p>
+      </div>
+    </div>
+    <div class="step-card" id="s2">
+      <div class="step-num"><span>2</span></div>
+      <div class="step-info">
+        <h3>हाँ का जवाब</h3>
+        <p>Block type और दुकान का address पूछें</p>
+      </div>
+    </div>
+    <div class="step-card" id="s3">
+      <div class="step-num"><span>3</span></div>
+      <div class="step-info">
+        <h3>Address मिला</h3>
+        <p>Rate per block पूछें</p>
+      </div>
+    </div>
+    <div class="step-card" id="s4">
+      <div class="step-num"><span>4</span></div>
+      <div class="step-info">
+        <h3>Rate मिला — 30 min</h3>
+        <p>धन्यवाद देकर conversation बंद करें</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER — PHONE -->
+  <div class="phone-col">
+    <div class="phone-wrap">
+      <div class="phone-glow"></div>
+      <div class="phone">
+        <div class="phone-notch"></div>
+
+        <div class="phone-statusbar">
+          <span class="status-left" id="clock">9:41</span>
+          <div class="status-right">
+            <span>●●●</span>
+            <span>WiFi</span>
+            <span>🔋</span>
+          </div>
+        </div>
+
+        <div class="wa-header">
+          <span class="wa-back">←</span>
+          <div class="wa-avatar">RB</div>
+          <div class="wa-contact">
+            <div class="wa-contact-name">Raj Blocks &amp; Materials</div>
+            <div class="wa-contact-status" id="status-txt">ऑनलाइन</div>
+          </div>
+          <div class="wa-icons">📞 ⋮</div>
+        </div>
+
+        <div class="wa-body" id="chatBody">
+          <div class="date-chip">आज</div>
+        </div>
+
+        <div class="wa-inputbar">
+          <div class="wa-pill">संदेश लिखें...</div>
+          <div class="wa-sendbtn">🎤</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT — CONTROLS -->
+  <div class="right-panel">
+    <div class="panel-label">Simulate Conversation</div>
+
+    <button class="ctrl-btn" id="b1" onclick="step1()">
+      <div class="ci">📤</div>
+      <div class="clabel">
+        पहला संदेश भेजें
+        <small>4000 blocks, mahamandir area</small>
+      </div>
+    </button>
+
+    <button class="ctrl-btn" id="b2" disabled onclick="step2()">
+      <div class="ci">💬</div>
+      <div class="clabel">
+        Supplier जवाब देता है: "हाँ"
+        <small>Trigger → block type & address पूछें</small>
+      </div>
+    </button>
+
+    <button class="ctrl-btn" id="b3" disabled onclick="step3()">
+      <div class="ci">📍</div>
+      <div class="clabel">
+        Supplier address देता है
+        <small>Trigger → rate per block पूछें</small>
+      </div>
+    </button>
+
+    <button class="ctrl-btn" id="b4" disabled onclick="step4()">
+      <div class="ci">💰</div>
+      <div class="clabel">
+        Supplier rate बताता है: ₹42/block
+        <small>Trigger → 30-min wait शुरू</small>
+      </div>
+    </button>
+
+    <button class="ctrl-btn waiting" id="b5" disabled onclick="step5()">
+      <div class="ci">⏳</div>
+      <div class="clabel">
+        30 मिनट बाद — धन्यवाद भेजें
+        <small>Conversation close करें</small>
+      </div>
+    </button>
+
+    <button class="reset-btn" onclick="reset()">↺ Reset conversation</button>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="slide-footer">
+    <span class="footer-note">Click the buttons on the right to simulate each step →</span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+      <span class="footer-brand" id="prog-label">0 / 5 steps</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const chat = document.getElementById('chatBody');
+  let stepsDone = 0;
+
+  // Live clock
+  function updateClock() {
+    const d = new Date();
+    document.getElementById('clock').textContent =
+      d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+  }
+  updateClock(); setInterval(updateClock, 10000);
+
+  function ts() {
+    const d = new Date();
+    return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+  }
+
+  function msg(text, side, delay=0) {
+    return new Promise(res => setTimeout(() => {
+      const row = document.createElement('div');
+      row.className = 'brow ' + (side==='out'?'out':'');
+      const ticks = side==='out' ? ' <span style="color:#53BDEB;font-size:9px">✓✓</span>' : '';
+      row.innerHTML = `<div class="bubble ${side}">${text.replace(/\n/g,'<br>')}<span class="btime">${ts()}${ticks}</span></div>`;
+      chat.appendChild(row);
+      chat.scrollTop = 9999;
+      res();
+    }, delay));
+  }
+
+  function typing(ms=1300) {
+    return new Promise(res => {
+      const row = document.createElement('div');
+      row.className = 'brow'; row.id = 'typing';
+      row.innerHTML = `<div class="bubble in" style="padding:8px 10px">
+        <span style="display:flex;gap:3px;align-items:center">
+          <span style="width:5px;height:5px;border-radius:50%;background:#aaa;animation:b 1s infinite 0s"></span>
+          <span style="width:5px;height:5px;border-radius:50%;background:#aaa;animation:b 1s infinite 0.2s"></span>
+          <span style="width:5px;height:5px;border-radius:50%;background:#aaa;animation:b 1s infinite 0.4s"></span>
+        </span></div>`;
+      if(!document.getElementById('bks')) {
+        const s=document.createElement('style'); s.id='bks';
+        s.textContent='@keyframes b{0%,80%,100%{opacity:.2}40%{opacity:1}}';
+        document.head.appendChild(s);
+      }
+      chat.appendChild(row); chat.scrollTop=9999;
+      document.getElementById('status-txt').textContent = 'टाइप कर रहे हैं...';
+      setTimeout(()=>{ const e=document.getElementById('typing'); if(e)e.remove(); document.getElementById('status-txt').textContent='ऑनलाइन'; res(); }, ms);
+    });
+  }
+
+  function setStep(n) {
+    for(let i=1;i<=4;i++){
+      const el=document.getElementById('s'+i);
+      if(i<n){ el.className='step-card done'; }
+      else if(i===n){ el.className='step-card active'; }
+      else { el.className='step-card'; }
+    }
+  }
+
+  function progress(n) {
+    stepsDone = n;
+    document.getElementById('prog').style.width = (n/5*100)+'%';
+    document.getElementById('prog-label').textContent = n + ' / 5 steps';
+  }
+
+  function dis(id){ document.getElementById(id).disabled=true; }
+  function en(id) { document.getElementById(id).disabled=false; }
+
+  async function step1(){
+    dis('b1');
+    await msg('भाईसाहब, मुझे mahamandir area में एक घर के लिए लगभग 4000 blocks चाहिए — concrete blocks, AAC blocks या fly ash ईंटें. क्या आप भेजते हैं?','out');
+    setStep(2); progress(1); en('b2');
+  }
+
+  async function step2(){
+    dis('b2');
+    await typing(1400);
+    await msg('हाँ जी, हम भेजते हैं 👍','in');
+    setTimeout(async()=>{
+      await msg('कौन सा block देते हैं आप? और आपकी दुकान कहाँ है?','out');
+      setStep(3); progress(2); en('b3');
+    },700);
+  }
+
+  async function step3(){
+    dis('b3');
+    await typing(1600);
+    await msg('हम AAC blocks और fly ash ईंटें दोनों रखते हैं।\nदुकान Mahamandir Road, Jodhpur पर है — Vijay Cement Shop के पास।','in');
+    setTimeout(async()=>{
+      await msg('ठीक है, रेट क्या है एक block का?','out');
+      setStep(4); progress(3); en('b4');
+    },700);
+  }
+
+  async function step4(){
+    dis('b4');
+    await typing(1200);
+    await msg('AAC block — ₹42 प्रति block\nFly ash ईंट — ₹8 प्रति ईंट\n4000 quantity पर delivery भी करेंगे 🙂','in');
+    progress(4); en('b5');
+    document.querySelector('#b5 small').textContent = '~30 min बाद भेजें';
+  }
+
+  async function step5(){
+    dis('b5');
+    await msg('धन्यवाद, हम जल्द ही आपको call करेंगे। 🙏','out');
+    setStep(5); progress(5);
+    document.getElementById('status-txt').textContent = 'आज, '+ts();
+    const done = document.createElement('div');
+    done.style.cssText='text-align:center;font-size:10px;color:#128C7E;padding:8px 0;font-weight:500;';
+    done.textContent='✅ Verification workflow पूरा हुआ';
+    chat.appendChild(done); chat.scrollTop=9999;
+  }
+
+  function reset(){
+    while(chat.children.length>1) chat.removeChild(chat.lastChild);
+    ['b1'].forEach(en); ['b2','b3','b4','b5'].forEach(dis);
+    setStep(1); progress(0);
+    document.getElementById('status-txt').textContent='ऑनलाइन';
+    document.querySelector('#b5 small').textContent = '~30 min wait शुरू';
+  }
+</script>
+</body>
+</html>
