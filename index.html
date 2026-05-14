@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Supplier Verification — WhatsApp Workflow</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0d1117;min-height:100vh;font-family:'Inter',sans-serif;color:#e6edf3;}
+
+/* ── HEADER ── */
+.header{padding:22px 36px 0;display:flex;align-items:flex-start;justify-content:space-between;}
+.header-left h1{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px;}
+.header-left p{font-size:12px;color:#8b949e;margin-top:3px;}
+.badge{background:#25d366;color:#0d1117;font-size:10px;font-weight:800;letter-spacing:1.5px;padding:5px 12px;border-radius:20px;text-transform:uppercase;margin-top:4px;display:inline-block;}
+
+/* ── LAYOUT ── */
+.layout{display:flex;gap:20px;padding:24px 36px 36px;align-items:flex-start;justify-content:center;}
+
+/* ── LEFT: WORKFLOW STEPS ── */
+.steps-panel{width:220px;flex-shrink:0;}
+.steps-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#8b949e;margin-bottom:16px;}
+.step-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:4px;padding:10px;border-radius:10px;cursor:pointer;transition:background .15s;}
+.step-row:hover{background:#161b22;}
+.step-row.active{background:#0d2818;}
+.step-row.done .step-circle{background:#25d366;border-color:#25d366;color:#fff;}
+.step-row.active .step-circle{border-color:#25d366;color:#25d366;}
+.step-circle{width:26px;height:26px;border-radius:50%;border:2px solid #30363d;color:#8b949e;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;transition:all .2s;}
+.step-connector{width:2px;height:14px;background:#21262d;margin-left:22px;margin-bottom:4px;}
+.step-row:last-child + .step-connector{display:none;}
+.step-text{flex:1;}
+.step-name{font-size:12px;font-weight:600;color:#c9d1d9;line-height:1.3;}
+.step-row.active .step-name{color:#fff;}
+.step-sub{font-size:10.5px;color:#6e7681;margin-top:2px;line-height:1.4;font-family:'Noto Sans Devanagari','Inter',sans-serif;}
+.step-row.active .step-sub{color:#8b949e;}
+
+/* ── CENTER: PHONE ── */
+.phone-wrap{display:flex;flex-direction:column;align-items:center;gap:0;}
+.phone-shell{
+  width:300px;height:620px;
+  background:#161b22;
+  border-radius:42px;
+  padding:10px;
+  box-shadow:0 0 0 1.5px #30363d,0 0 0 3px #161b22,0 24px 60px rgba(0,0,0,.8);
+  position:relative;flex-shrink:0;
+}
+.phone-notch{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:90px;height:24px;background:#0d1117;border-radius:16px;z-index:10;display:flex;align-items:center;justify-content:center;gap:6px;}
+.notch-dot{width:8px;height:8px;background:#21262d;border-radius:50%;}
+.notch-bar{width:38px;height:4px;background:#21262d;border-radius:2px;}
+.phone-screen{width:100%;height:100%;background:#111b21;border-radius:34px;overflow:hidden;display:flex;flex-direction:column;}
+
+/* WA Header */
+.wa-top{background:#1f2c34;padding:38px 10px 9px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.wa-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#0d6b40,#25d366);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
+.wa-ci{flex:1;}
+.wa-name{font-size:13px;font-weight:700;color:#e9edef;}
+.wa-st{font-size:10px;color:#8696a0;}
+.wa-ic{display:flex;gap:14px;color:#aebac1;font-size:16px;}
+
+/* Chat */
+.wa-chat{flex:1;overflow-y:auto;padding:8px 7px;display:flex;flex-direction:column;gap:3px;background:#0b141a;background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.018'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");scroll-behavior:smooth;}
+.wa-chat::-webkit-scrollbar{display:none;}
+.date-lbl{text-align:center;margin:6px 0;}
+.date-lbl span{background:#182229;color:#8696a0;font-size:9.5px;padding:3px 9px;border-radius:7px;}
+.bbl{max-width:80%;padding:6px 9px 16px;border-radius:7px;font-size:11px;line-height:1.5;position:relative;word-break:break-word;font-family:'Noto Sans Devanagari','Inter',sans-serif;animation:popIn .2s ease;}
+@keyframes popIn{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
+.bbl.s{background:#005c4b;color:#e9edef;align-self:flex-end;border-bottom-right-radius:2px;margin-right:2px;}
+.bbl.r{background:#202c33;color:#e9edef;align-self:flex-start;border-bottom-left-radius:2px;margin-left:2px;}
+.bt{position:absolute;bottom:3px;right:7px;font-size:8.5px;color:rgba(233,237,239,.45);display:flex;align-items:center;gap:2px;}
+.tick{color:#53bdeb;}
+.typing-b{background:#202c33;padding:8px 12px;border-radius:7px;border-bottom-left-radius:2px;align-self:flex-start;display:none;}
+.typing-b.on{display:flex;gap:3px;align-items:center;}
+.td{width:6px;height:6px;background:#8696a0;border-radius:50%;animation:tb 1.2s infinite;}
+.td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+@keyframes tb{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+
+/* Input bar */
+.wa-bar{background:#1f2c34;padding:7px;display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.wa-inp{flex:1;background:#2a3942;border:none;border-radius:18px;padding:7px 12px;color:#e9edef;font-size:11px;outline:none;font-family:'Noto Sans Devanagari','Inter',sans-serif;}
+.wa-inp::placeholder{color:#8696a0;}
+.wa-btn{width:33px;height:33px;background:#00a884;border-radius:50%;display:flex;align-items:center;justify-content:center;border:none;color:#fff;font-size:13px;cursor:pointer;flex-shrink:0;}
+
+/* ── RIGHT: SIMULATE PANEL ── */
+.sim-panel{width:256px;flex-shrink:0;}
+.sim-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#8b949e;margin-bottom:14px;}
+.sim-card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:13px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.sim-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#30363d;transition:background .15s;}
+.sim-card:hover{border-color:#30363d;background:#1c2128;}
+.sim-card.active{border-color:#25d366;background:#0d2818;}
+.sim-card.active::before{background:#25d366;}
+.sim-card.done::before{background:#25d366;opacity:.5;}
+.sim-card.done{opacity:.7;}
+.sc-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6e7681;margin-bottom:5px;}
+.sim-card.active .sc-label{color:#25d366;}
+.sc-msg{font-size:12px;color:#c9d1d9;line-height:1.5;font-family:'Noto Sans Devanagari','Inter',sans-serif;}
+.sc-trigger{display:flex;align-items:center;gap:5px;margin-top:7px;font-size:10px;color:#6e7681;}
+.sc-trigger span{background:#21262d;padding:2px 7px;border-radius:10px;color:#8b949e;}
+.sim-card.active .sc-trigger span{background:#0d3820;color:#25d366;}
+.loc-preview{display:flex;align-items:center;gap:7px;background:#1c2128;border-radius:7px;padding:7px;margin-top:7px;}
+.loc-thumb{width:36px;height:36px;background:#1a3228;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.loc-thumb-txt{flex:1;}
+.loc-thumb-name{font-size:10.5px;font-weight:700;color:#c9d1d9;}
+.loc-thumb-addr{font-size:9.5px;color:#6e7681;margin-top:1px;}
+
+.reset-btn{width:100%;padding:10px;border-radius:10px;border:1px solid #21262d;background:transparent;color:#6e7681;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.reset-btn:hover{background:#161b22;color:#c9d1d9;border-color:#30363d;}
+
+/* Status bar at bottom of sim panel */
+.status-pill{display:flex;align-items:center;gap:7px;padding:8px 12px;background:#161b22;border:1px solid #21262d;border-radius:10px;margin-bottom:10px;font-size:11px;color:#6e7681;}
+.spulse{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.spulse.green{background:#25d366;box-shadow:0 0 5px #25d366;animation:pulse 2s infinite;}
+.spulse.orange{background:#f0a500;box-shadow:0 0 5px #f0a500;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Timer */
+.timer-card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:13px 14px;margin-bottom:8px;}
+.timer-card .sc-label{color:#f0a500;}
+.timer-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.timer-val{font-size:14px;font-weight:700;color:#f0a500;font-variant-numeric:tabular-nums;}
+.prog{height:3px;background:#21262d;border-radius:2px;margin-top:8px;overflow:hidden;}
+.prog-fill{height:100%;background:#f0a500;border-radius:2px;transition:width 1s linear;width:0;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <h1>Supplier Verification — WhatsApp Workflow</h1>
+    <p>Mahamandir area &bull; Concrete / AAC / Fly-ash Blocks &bull; 4000 units</p>
+  </div>
+  <span class="badge">Interactive Demo</span>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: STEPS -->
+  <div class="steps-panel">
+    <div class="steps-title">Workflow Steps</div>
+
+    <div class="step-row active" id="st1">
+      <div class="step-circle" id="sc1">1</div>
+      <div class="step-text">
+        <div class="step-name">पहला संदेश</div>
+        <div class="step-sub">Block type और quantity पूछें</div>
+      </div>
+    </div>
+    <div class="step-connector"></div>
+
+    <div class="step-row" id="st2">
+      <div class="step-circle" id="sc2">2</div>
+      <div class="step-text">
+        <div class="step-name">हाँ का जवाब</div>
+        <div class="step-sub">Block type और address पूछें</div>
+      </div>
+    </div>
+    <div class="step-connector"></div>
+
+    <div class="step-row" id="st3">
+      <div class="step-circle" id="sc3">3</div>
+      <div class="step-text">
+        <div class="step-name">Address मिला</div>
+        <div class="step-sub">Rate per block पूछें</div>
+      </div>
+    </div>
+    <div class="step-connector"></div>
+
+    <div class="step-row" id="st4">
+      <div class="step-circle" id="sc4">4</div>
+      <div class="step-text">
+        <div class="step-name">📍 Location Pin</div>
+        <div class="step-sub">Vendor की दुकान का pin</div>
+      </div>
+    </div>
+    <div class="step-connector"></div>
+
+    <div class="step-row" id="st5">
+      <div class="step-circle" id="sc5">5</div>
+      <div class="step-text">
+        <div class="step-name">Rate मिली</div>
+        <div class="step-sub">Rate per block पूछें</div>
+      </div>
+    </div>
+    <div class="step-connector"></div>
+
+    <div class="step-row" id="st6">
+      <div class="step-circle" id="sc6">6</div>
+      <div class="step-text">
+        <div class="step-name">धन्यवाद</div>
+        <div class="step-sub">Conversation बंद करें</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: PHONE -->
+  <div class="phone-wrap">
+    <div class="phone-shell">
+      <div class="phone-notch"><div class="notch-dot"></div><div class="notch-bar"></div></div>
+      <div class="phone-screen">
+        <div class="wa-top">
+          <div class="wa-av">R</div>
+          <div class="wa-ci">
+            <div class="wa-name">Raj Blocks &amp; Materials</div>
+            <div class="wa-st" id="waStatus">online</div>
+          </div>
+          <div class="wa-ic"><span>📞</span><span>⋮</span></div>
+        </div>
+        <div class="wa-chat" id="chat">
+          <div class="date-lbl"><span>आज</span></div>
+          <div class="typing-b" id="typingEl">
+            <div class="td"></div><div class="td"></div><div class="td"></div>
+          </div>
+        </div>
+        <div class="wa-bar">
+          <input class="wa-inp" id="inputEl" placeholder="संदेश लिखें..." readonly>
+          <button class="wa-btn" onclick="advance()">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: SIMULATE -->
+  <div class="sim-panel">
+    <div class="sim-title">Simulate Conversation</div>
+
+    <div class="status-pill" id="statusPill">
+      <div class="spulse green"></div>
+      <span id="statusTxt">Step 1 तैयार — नीचे क्लिक करें</span>
+    </div>
+
+    <!-- Sim cards -->
+    <div class="sim-card active" id="card1" onclick="advance()">
+      <div class="sc-label">Step 1 — पहला संदेश</div>
+      <div class="sc-msg">भाईसाहब, 4000 blocks चाहिए — क्या आप भेजते हैं?</div>
+      <div class="sc-trigger"><span>→ तुरंत भेजें</span></div>
+    </div>
+
+    <div class="sim-card" id="card2" onclick="advance()">
+      <div class="sc-label">Step 2 — Supplier address देखें</div>
+      <div class="sc-msg">Block type, product और address पूछें</div>
+      <div class="sc-trigger"><span>Trigger: हाँ का reply ✓</span></div>
+    </div>
+
+    <div class="sim-card" id="card3" onclick="advance()">
+      <div class="sc-label">Step 3 — Location Pin माँगें</div>
+      <div class="sc-msg">भाईसाहब, WhatsApp location pin share करें?</div>
+      <div class="sc-trigger"><span>Trigger: address मिला ✓</span></div>
+      <div class="loc-preview">
+        <div class="loc-thumb">📍</div>
+        <div class="loc-thumb-txt">
+          <div class="loc-thumb-name">Raj Blocks &amp; Materials</div>
+          <div class="loc-thumb-addr">Mahamandir Chowk, Jodhpur</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-card" id="card4" onclick="advance()">
+      <div class="sc-label">Step 4 — Rate पूछें</div>
+      <div class="sc-msg">ठीक है, रेट क्या है एक block का?</div>
+      <div class="sc-trigger"><span>Trigger: pin मिला ✓</span></div>
+    </div>
+
+    <div class="sim-card" id="card5" onclick="advance()">
+      <div class="sc-label">Step 5 — धन्यवाद</div>
+      <div class="sc-msg">धन्यवाद, हम जल्द ही आपको call करेंगे।</div>
+      <div class="sc-trigger"><span>Trigger: rate मिली ✓</span></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetAll()">↺ &nbsp;Reset conversation</button>
+  </div>
+
+</div>
+
+<script>
+const STEPS = [
+  // 0
+  { sent:"भाईसाहब, मुझे mahamandir area में एक घर के लिए लगभग 4000 blocks चाहिए, कंक्रीट ब्लॉक्स, AAC ब्लॉक्स या फ्लाई ऐश ईंटें — क्या आप भेजते हैं?",
+    st:"10:32 AM",
+    reply:"जी हाँ, हम AAC ब्लॉक्स और फ्लाई ऐश ईंटें दोनों देते हैं 🙏", rt:"10:35 AM",
+    leftStep:2, simCard:2,
+    status:"Reply मिली! Product & Address पूछें" },
+  // 1
+  { sent:"कौन सा block देते हैं आप? और आपकी दुकान कहाँ है?",
+    st:"10:36 AM",
+    reply:"हम Siporex AAC ब्लॉक्स और Nuvoco फ्लाई ऐश ईंटें रखते हैं।\nदुकान: Mahamandir Chowk, Jodhpur", rt:"10:39 AM",
+    leftStep:3, simCard:3,
+    status:"Address मिली! Location pin माँगें 📍" },
+  // 2 — ask location + auto show pin
+  { sent:"भाईसाहब, क्या आप अपनी दुकान की WhatsApp location pin share कर सकते हैं?",
+    st:"10:40 AM",
+    locPin:true, rt:"10:42 AM",
+    leftStep:4, simCard:4,
+    status:"📍 Location pin मिली! Rate पूछें" },
+  // 3
+  { sent:"ठीक है, रेट क्या है एक block का?",
+    st:"10:43 AM",
+    reply:"AAC ब्लॉक 8\" — ₹52/piece\nफ्लाई ऐश ईंट — ₹8.50/piece\n(1000+ qty पर discount होगा)", rt:"10:47 AM",
+    leftStep:5, simCard:5,
+    status:"Rate मिली! धन्यवाद भेजें" },
+  // 4 — final
+  { sent:"धन्यवाद, हम जल्द ही आपको call करेंगे। 🙏",
+    st:"11:17 AM",
+    leftStep:6, simCard:5,
+    status:"✅ Verification पूरा! Vendor verified 🎉" }
+];
+
+let cur=0, running=false;
+
+/* ── helpers ── */
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function addBubble(txt,type,time){
+  const chat=document.getElementById('chat');
+  const typing=document.getElementById('typingEl');
+  const b=document.createElement('div');
+  b.className='bbl '+(type==='sent'?'s':'r');
+  b.innerHTML=txt.replace(/\n/g,'<br>')+
+    '<span class="bt">'+time+(type==='sent'?' <span class="tick">✓✓</span>':'')+'</span>';
+  chat.insertBefore(b,typing);
+  chat.scrollTop=9999;
+}
+
+function addLocBubble(time){
+  const chat=document.getElementById('chat');
+  const typing=document.getElementById('typingEl');
+  const w=document.createElement('div');
+  w.className='wa-loc';
+  w.style.cssText='align-self:flex-start;margin-left:2px;width:200px;border-radius:8px 8px 8px 2px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.5);animation:popIn .25s ease;';
+  const B64='PHN2ZyB2aWV3Qm94PSIwIDAgMjAwIDEwNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwNiIgZmlsbD0iIzFhMzIyOCIvPgogIDxyZWN0IHg9IjAiIHk9IjQ1IiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE2IiBmaWxsPSIjMmM0ZTM4Ii8+CiAgPHJlY3QgeD0iOTAiIHk9IjAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIxMDYiIGZpbGw9IiMyYzRlMzgiLz4KICA8cmVjdCB4PSIwIiB5PSIyMSIgd2lkdGg9IjIwMCIgaGVpZ2h0PSI1IiBmaWxsPSIjMWUzYTJjIi8+CiAgPHJlY3QgeD0iMCIgeT0iODAiIHdpZHRoPSIyMDAiIGhlaWdodD0iNSIgZmlsbD0iIzFlM2EyYyIvPgogIDxyZWN0IHg9IjQwIiB5PSIwIiB3aWR0aD0iNiIgaGVpZ2h0PSIxMDYiIGZpbGw9IiMxZTNhMmMiLz4KICA8cmVjdCB4PSIxNTQiIHk9IjAiIHdpZHRoPSI2IiBoZWlnaHQ9IjEwNiIgZmlsbD0iIzFlM2EyYyIvPgogIDxyZWN0IHg9IjQ4IiB5PSIyNyIgd2lkdGg9IjM2IiBoZWlnaHQ9IjE1IiByeD0iMiIgZmlsbD0iIzFmM2MyYiIvPgogIDxyZWN0IHg9IjExNCIgeT0iMjciIHdpZHRoPSIzMyIgaGVpZ2h0PSIxNSIgcng9IjIiIGZpbGw9IiMxZjNjMmIiLz4KICA8cmVjdCB4PSI0OCIgeT0iNjUiIHdpZHRoPSIzNiIgaGVpZ2h0PSIxNSIgcng9IjIiIGZpbGw9IiMxZjNjMmIiLz4KICA8cmVjdCB4PSIxMTQiIHk9IjY1IiB3aWR0aD0iMzMiIGhlaWdodD0iMTUiIHJ4PSIyIiBmaWxsPSIjMWYzYzJiIi8+CiAgPHJlY3QgeD0iNSIgeT0iMjciIHdpZHRoPSIyNyIgaGVpZ2h0PSIxNSIgcng9IjIiIGZpbGw9IiMxYTM2MjYiLz4KICA8cmVjdCB4PSIxNjIiIHk9IjY1IiB3aWR0aD0iMjciIGhlaWdodD0iMTUiIHJ4PSIyIiBmaWxsPSIjMWEzNjI2Ii8+CiAgPGNpcmNsZSBjeD0iMTAwIiBjeT0iNTMiIHI9IjE1IiBmaWxsPSJyZ2JhKDc5LDE5NSwyNDcsMC4xKSIgc3Ryb2tlPSJyZ2JhKDc5LDE5NSwyNDcsMC4yMikiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgPGVsbGlwc2UgY3g9IjEwMCIgY3k9IjU4IiByeD0iNSIgcnk9IjIiIGZpbGw9InJnYmEoMCwwLDAsMC4zNSkiLz4KICA8cG9seWdvbiBwb2ludHM9Ijk1LDQ3IDEwNSw0NyAxMDAsNTgiIGZpbGw9IiNjNjI4MjgiLz4KICA8Y2lyY2xlIGN4PSIxMDAiIGN5PSIzNyIgcj0iMTEiIGZpbGw9IiNlNTM5MzUiLz4KICA8Y2lyY2xlIGN4PSI5NiIgY3k9IjMzIiByPSIzLjUiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC40MikiLz4KICA8Y2lyY2xlIGN4PSIxMDAiIGN5PSIzNyIgcj0iNCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjg4KSIvPgo8L3N2Zz4=';
+  w.innerHTML=
+    '<img src="data:image/svg+xml;base64,'+B64+'" width="200" height="106" style="display:block;">'
+   +'<div style="background:#202c33;padding:8px 9px 18px;display:flex;align-items:center;gap:7px;position:relative;">'
+     +'<div style="width:26px;height:26px;background:#25d366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">📍</div>'
+     +'<div style="flex:1;overflow:hidden;">'
+       +'<div style="font-size:11px;font-weight:700;color:#e9edef;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Raj Blocks &amp; Materials</div>'
+       +'<div style="font-size:9.5px;color:#8696a0;margin-top:1px;">Mahamandir Chowk, Jodhpur</div>'
+     +'</div>'
+     +'<span style="position:absolute;bottom:4px;right:7px;font-size:8.5px;color:rgba(233,237,239,.4);">'+time+'</span>'
+   +'</div>'
+   +'<div style="background:#2a3942;display:flex;align-items:center;justify-content:center;padding:6px;color:#53bdeb;font-size:10.5px;font-weight:600;border-top:1px solid #3a4a52;">🗺&nbsp; Open in Maps</div>';
+  chat.insertBefore(w,typing);
+  chat.scrollTop=9999;
+}
+
+function showTyping(v){
+  document.getElementById('typingEl').className='typing-b'+(v?' on':'');
+  document.getElementById('waStatus').textContent=v?'typing...':'online';
+  document.getElementById('chat').scrollTop=9999;
+}
+
+function setStatus(msg,orange){
+  const pill=document.getElementById('statusPill');
+  pill.innerHTML='<div class="spulse '+(orange?'orange':'green')+'"></div><span>'+msg+'</span>';
+}
+
+function setLeftStep(n){
+  for(let i=1;i<=6;i++){
+    const row=document.getElementById('st'+i),circ=document.getElementById('sc'+i);
+    row.classList.remove('active','done');
+    if(i<n){row.classList.add('done');circ.innerHTML='✓';}
+    else if(i===n){row.classList.add('active');circ.textContent=i;}
+    else{circ.textContent=i;}
+  }
+}
+
+function setSimCard(n){
+  for(let i=1;i<=5;i++){
+    const c=document.getElementById('card'+i);
+    if(!c)continue;
+    c.classList.remove('active','done');
+    if(i<n)c.classList.add('done');
+    else if(i===n)c.classList.add('active');
+  }
+}
+
+function startTimer(){
+  timerRunning=true; timerSecs=10;
+  document.getElementById('timerVal').textContent='0:10 demo';
+  timerInterval=setInterval(()=>{
+    timerSecs--;
+    document.getElementById('timerVal').textContent=
+      timerSecs>0?'0:'+String(timerSecs).padStart(2,'0')+' left':'भेज रहे हैं...';
+    document.getElementById('progFill').style.width=((10-timerSecs)/10*100)+'%';
+    if(timerSecs<=0){
+      clearInterval(timerInterval);timerRunning=false;
+      setStatus('⏰ Timer पूरा! Thank you भेजें');
+    }
+  },1000);
+}
+
+async function advance(){
+  if(running)return;
+  running=true;
+  const d=STEPS[cur];
+  if(!d){running=false;return;}
+
+  if(d.sent){
+    document.getElementById('inputEl').value=d.sent;
+    await sleep(250);
+    addBubble(d.sent,'sent',d.st);
+    document.getElementById('inputEl').value='';
+  }
+
+  if(d.locPin){
+    await sleep(600);showTyping(true);
+    await sleep(1300);showTyping(false);
+    addLocBubble(d.rt);
+  } else if(d.reply){
+    await sleep(600);showTyping(true);
+    await sleep(1400);showTyping(false);
+    addBubble(d.reply,'received',d.rt);
+  }
+
+  cur++;
+  setLeftStep(d.leftStep);
+  setSimCard(d.simCard);
+  setStatus(d.status);
+
+  if(cur>=STEPS.length){
+    document.getElementById('waStatus').textContent='verified ✓';
+    setStatus('✅ Verification पूरा! Vendor verified 🎉');
+  }
+  running=false;
+}
+
+function resetAll(){
+  cur=0;running=false;
+  const chat=document.getElementById('chat');
+  chat.querySelectorAll('.bbl,.wa-loc').forEach(b=>b.remove());
+  setLeftStep(1);setSimCard(1);
+  setStatus('Step 1 तैयार — नीचे क्लिक करें');
+  document.getElementById('waStatus').textContent='online';
+  document.getElementById('inputEl').value='';
+}
+
+setLeftStep(1);setSimCard(1);
+</script>
+</body>
+</html>
